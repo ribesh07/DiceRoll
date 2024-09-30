@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Image, ImageSourcePropType, Pressable, StyleSheet, Text, TouchableNativeFeedback, TouchableOpacity, View } from 'react-native';
-import React, { PropsWithChildren, useState } from 'react';
+import { Animated, Image, ImageSourcePropType, Pressable, StyleSheet, Text, TouchableNativeFeedback, TouchableOpacity, View, ViewStyle } from 'react-native';
+import React, { PropsWithChildren, useRef, useState } from 'react';
 import DiceOne from './assets/img/dice-six-faces-one.png';
 import DiceTwo from './assets/img/dice-six-faces-two.png';
 import DiceThree from './assets/img/dice-six-faces-three.png';
@@ -9,10 +9,17 @@ import DiceFour from './assets/img/dice-six-faces-four.png';
 import DiceFive from './assets/img/dice-six-faces-five.png';
 import DiceSix from './assets/img/dice-six-faces-six.png';
 import DiceFire from './assets/img/dice-fire.png';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 type DiceProps = PropsWithChildren<{
   imageUrl : ImageSourcePropType
 }>
+
+//HapticOptions
+const options = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
 const Dice = ({ imageUrl }: DiceProps) => {
   return (
@@ -26,9 +33,12 @@ const Dice = ({ imageUrl }: DiceProps) => {
 
 export default function App() {
   const [diceState,setdiceState] = useState<ImageSourcePropType>(DiceFire);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   //Roll function
   const rollDice = () => {
+    fadeAnim.setValue(0);   //setting fade to 0
+
     let random = Math.floor(Math.random() * 6) + 1;
     console.log(random);
     switch (random) {
@@ -53,7 +63,28 @@ export default function App() {
       default :
         setdiceState(DiceFire);
     }
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
+    ReactNativeHapticFeedback.trigger('impactLight', options);
+    console.log('impactLight-FeedBack');
   };
+
+  const rotateInterpolate = fadeAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const animatedStyle = {
+    transform: [
+      {
+        rotate: rotateInterpolate,
+      },
+    ],
+  };
+
   return (
     <>
       <View style={{
@@ -65,7 +96,11 @@ export default function App() {
       </View>
       <View style={styles.contaner}>
         <View style={styles.diceContainer}>
-          <Dice imageUrl={diceState} />
+        <Animated.View style={[
+          animatedStyle,
+        ]}>
+            <Dice imageUrl={diceState} />
+          </Animated.View>
           <Pressable
             onPress={()=>{
             rollDice();
@@ -86,17 +121,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   diceImage : {
-    width: 200,
-    height: 200,
+    width: 150,
+    height: 150,
     elevation : 10,
   },
   diceContainer : {
-    // alignItems: 'center',
     justifyContent: 'center',
     marginTop: -34,
   },
   rollButtonText :{
-    marginTop: 24,
+    marginTop: 50,
     fontSize: 20,
     color: '#fff',
     fontWeight: 'bold',
