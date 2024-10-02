@@ -1,7 +1,7 @@
+/* eslint-disable semi */
 /* eslint-disable react-native/no-inline-styles */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { Animated, Image, ImageSourcePropType, Pressable, StyleSheet, Text, TouchableNativeFeedback, TouchableOpacity, View, ViewStyle } from 'react-native';
-import React, { PropsWithChildren, useRef, useState } from 'react';
+import { Animated, Image, ImageSourcePropType, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import React, { PropsWithChildren, useEffect, useRef, useState } from 'react';
 import DiceOne from './assets/img/dice-six-faces-one.png';
 import DiceTwo from './assets/img/dice-six-faces-two.png';
 import DiceThree from './assets/img/dice-six-faces-three.png';
@@ -10,6 +10,7 @@ import DiceFive from './assets/img/dice-six-faces-five.png';
 import DiceSix from './assets/img/dice-six-faces-six.png';
 import DiceFire from './assets/img/dice-fire.png';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import Quiz, { ChildComponentRef } from './ApiCallBack';
 
 type DiceProps = PropsWithChildren<{
   imageUrl : ImageSourcePropType
@@ -32,13 +33,31 @@ const Dice = ({ imageUrl }: DiceProps) => {
 
 
 export default function App() {
-  const [diceState,setdiceState] = useState<ImageSourcePropType>(DiceFire);
+
+  const [diceState,setdiceState] = useState<ImageSourcePropType>(DiceFire)
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [showComponent, setShowComponent] = useState(false);
 
-  //Roll function
-  const rollDice = () => {
+  //Ref to access child
+  const myComponentRef = useRef<ChildComponentRef>(null);
+  const handleTrigger = () => {
+    if(myComponentRef.current){
+      myComponentRef.current.handleButtonPress()
+    }
+  }
+
+const { width, height } = useWindowDimensions();
+const [modeScreen , setmodeScreen] = useState(true);
+useEffect(() => {
+  console.log(`Width: ${width}, Height: ${height}`);
+  (height > width) ? setmodeScreen(true) : setmodeScreen(false)
+  console.log(modeScreen)
+}, [width, height,modeScreen]);
+
+
+//roll dice
+ const rollDice = () => {
     fadeAnim.setValue(0);   //setting fade to 0
-
     let random = Math.floor(Math.random() * 6) + 1;
     console.log(random);
     switch (random) {
@@ -70,6 +89,9 @@ export default function App() {
     }).start();
     ReactNativeHapticFeedback.trigger('impactLight', options);
     console.log('impactLight-FeedBack');
+    setShowComponent(true);
+    //handle trigger from parent
+    // handleTrigger();
   };
 
   const rotateInterpolate = fadeAnim.interpolate({
@@ -94,8 +116,47 @@ export default function App() {
       }}>
       <Text style={styles.textHeading}>Dice Roll</Text>
       </View>
+      {showComponent ?
+      <>
+        <View style={styles.contaner}>
+          {/* Passing Ref to child */}
+          <Quiz ref = {myComponentRef}/>
+          {/* <Button title="Trigger myFunction" onPress={handleTrigger} /> */}
+        </View>
+      </>  :
+      <>
+        <View style={{
+          height: '40%',
+          width : '100%',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#8395A7',
+        }}>
+          <Text style={{
+            fontSize: 20,
+            padding : 10,
+            margin: 30,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            color: 'white',
+          }}>
+            Press the button to roll the dice !
+          </Text>
+        </View>
+      </>
+    }
       <View style={styles.contaner}>
         <View style={styles.diceContainer}>
+        {/* <Text style={{
+            fontSize: 20,
+            padding : 10,
+            margin: 30,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            color: 'white',
+          }}>
+            {dicevalue}
+          </Text> */}
         <Animated.View style={[
           animatedStyle,
         ]}>
@@ -103,6 +164,7 @@ export default function App() {
           </Animated.View>
           <Pressable
             onPress={()=>{
+              handleTrigger();
             rollDice();
           }}>
           <Text style={styles.rollButtonText}>Roll</Text>
@@ -127,10 +189,11 @@ const styles = StyleSheet.create({
   },
   diceContainer : {
     justifyContent: 'center',
-    marginTop: -34,
+    marginTop: '11%',
   },
   rollButtonText :{
-    marginTop: 50,
+    marginTop: 80,
+    marginBottom :'33%',
     fontSize: 20,
     color: '#fff',
     fontWeight: 'bold',

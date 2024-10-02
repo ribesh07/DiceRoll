@@ -1,0 +1,8 @@
+{
+  "type": "multiple",
+  "difficulty": "easy",
+  "category": "Geography",
+  "question": "What name was historically used for the Turkish city currently known as Istanbul?",
+  "correct_answer": "Constantinople",
+  "incorrect_answers": ["H&uuml;davendigar", "S&ouml;ğ&uuml;t", "Adrianople"]
+}
